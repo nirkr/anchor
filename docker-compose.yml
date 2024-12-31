@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:latest
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    ports:
+      - "${DB_PORT}:5432"                          
+    volumes:
+      - pg_data:/var/lib/postgresql/data   # Persist data using Docker volumes
+      - ./server/src/sql/init.sql:/docker-entrypoint-initdb.d/init.sql  # Mount SQL script
+
+
+  server:
+    build:
+      context: ./server                     # Path to Dockerfile of server
+    container_name: server
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DATABASE: ${DB_DATABASE}
+      TMDB_TOKEN: ${TMDB_TOKEN}
+    ports:
+      - "5000:5000"                        # Map server port
+    depends_on:
+      - db                                 # Ensure DB starts first
+
+volumes:
+  pg_data:

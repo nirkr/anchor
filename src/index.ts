@@ -2,12 +2,13 @@ import  dotenv from 'dotenv';
 import express, {Request, Response} from 'express';
 import { Schema, SetCellInput } from './types/index';
 import { createSheet, getSheetById, setCellValue } from './controllers/index';
+import mongoose from 'mongoose';
 
 const app = express();
-const port = 3000;
+const PORT = 3000;
 
+dotenv.config()
 app.use(express.json());
-
 
 app.post('/sheet',async (req:Request, res:Response) => {
   const data: Schema = req.body
@@ -23,7 +24,13 @@ app.put('/cell', async (req:Request, res:Response) => {
 
 app.get('/sheet/:sheetId', async (req:Request, res:Response) => {
   const {sheetId} = req.params
-  const response = await getSheetById(sheetId)
+  const numericSheetId = Number(sheetId);
+
+  if (isNaN(numericSheetId)) {
+    res.status(400).send({ error: 'Invalid sheetId, must be a number' });
+    return
+  }
+  const response = await getSheetById(numericSheetId)
   res.status(response.status).send(response.data || response.error);
 });
 
@@ -31,6 +38,15 @@ app.use("*", (_req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+const startServer = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI as string)
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error: any) {
+    console.error(error.message);
+  }
+};
+
+startServer();

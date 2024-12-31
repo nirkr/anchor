@@ -1,4 +1,4 @@
-export type ControllerResponse<T> = {
+export type ControllerResponse<T=null> = {
     status: number;
     data?: T;
     error?: Error;
